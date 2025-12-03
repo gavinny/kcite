@@ -1,9 +1,9 @@
 === KCite ===
 
-Contributors: philliplord, sjcockell, knowledgeblog, d_swan
+Contributors: philliplord, sjcockell, knowledgeblog, d_swan, gavinny
 Tags: references, citations, doi, crossref, pubmed, bibliography, pmid, res-comms, scholar, academic, science
 Requires at least: 3.0
-Tested up to: 3.3.1
+Tested up to: 6.8.3
 Stable tag: 1.6.2
 
 A tool for producing citations and bibliographies in Wordpress posts.
@@ -44,6 +44,7 @@ Kcite now supports DOIs from both [CrossRef](http://www.crossref.org) and
 supported. URLs are supported via
 [Greycite](http://greycite.knowledgeblog.org).
 
+New ref feature: &#91;cite ref="Fred et al. (2001)" &#93;10.1021/jf904082b&#91;/cite&#93; 
 
 From Kcite 1.4, Citeproc-js
 (https://bitbucket.org/fbennett/citeproc-js/wiki/Home) is used to render the
@@ -62,6 +63,12 @@ contact the authors, please email knowledgeblog@googlegroups.com.
 
 
 == Upgrade Notice ==
+
+= This version =
+
+Fixes required for PHP8+ and to to avoid new warnings. Not sure this is exactly right, but it works. 
+
+New functionality: ability to define a reference text for the link. 
 
 = 1.6.3 =
 
