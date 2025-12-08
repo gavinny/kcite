@@ -4,7 +4,7 @@
    Plugin URI: http://knowledgeblog.org/kcite-plugin
    Description: Add references and bibliography to blogposts
    Version: 1.6.3
-   Author: Simon Cockell, Phillip Lord
+   Author: Simon Cockell, Phillip Lord (additional functionality by Gavin. Do not update!) 
    Author URI: http://knowledgeblog.org
    Email: knowledgeblog@googlegroups.com
    
@@ -33,7 +33,7 @@ class KCite{
   static $entrez_slug="&email=knowledgeblog%40googlegroups.com&tool=kcite";
 
   static $bibliography;
-  
+
   // store a cached version. In case of a mismatch, we ignore cache.
   //(progn (forward-line)(end-of-line)(zap-to-char -1 ?=)(insert "= " (number-to-string (float-time)))(insert ";"))
   static $kcite_cache_version = 1348841955.255003;
@@ -68,21 +68,21 @@ class KCite{
     // priority 12 is lower than shortcode (11), so can assure that this runs
     // after the shortcode filter does, otherwise, it is all going to work
     // very badly. 
-    add_filter('the_content', array(__CLASS__,'bibliography_filter'),12 );
+    add_filter('the_content', array( $this,'bibliography_filter'),12 );
     
     // add a filter to specify the sections
     add_filter('the_content', 
-               array(__CLASS__, 'bibliography_section_filter'),14 );
+               array( $this, 'bibliography_section_filter'),14 );
       
 
     add_shortcode( "cite",
-                   array( __CLASS__, "cite_shortcode" ));
+               array( $this, "cite_shortcode" ));
 
     add_shortcode( "fullcite",
-                   array( __CLASS__, "fullcite_shortcode" ));
+	       array( $this, "fullcite_shortcode" ));
 
     add_action( 'wp_footer', 
-                array( __CLASS__, 'add_script' ) );
+                array( $this, 'add_script' ) );
 
     add_option( 'kcite_citation_render_client', true );
     add_option( 'kcite_citation_timeout', 60 );
@@ -92,13 +92,13 @@ class KCite{
     add_option( 'kcite_cache_references', true );
     add_option( 'kcite_user_cache_version', time() );
 
-    add_filter('plugin_action_links', array(__CLASS__, 'refman_settings_link'), 9, 2 );
+    add_filter('plugin_action_links', array( $this, 'refman_settings_link'), 9, 2 );
 
     // json download bib
     add_filter( "query_vars", 
-                array( __CLASS__, "kcite_query_vars" ) );
+                array( $this, "kcite_query_vars" ) );
     add_action( "template_redirect", 
-                array( __CLASS__, "kcite_template_redirect" ) );
+                array( $this, "kcite_template_redirect" ) );
   }
 
   
@@ -110,7 +110,8 @@ class KCite{
 
   function kcite_template_redirect(){
       global $wp_query;
-      
+     
+      if ( array_key_exists( 'kcite-format', $wp_query->query_vars ) ) { 
       if( $wp_query->query_vars["kcite-format"] == "json"
           && $wp_query->query_vars[ "kcite-p" ] > 0 
           ){    
@@ -133,6 +134,7 @@ class KCite{
 
           exit;
       }
+      } 
   }
   
 
@@ -242,6 +244,7 @@ $content
                ( 
                 array(
                       "source" => false,
+                      "ref" => "fred"
                       ), $atts ) );
 
       self::instantiate_bibliography();
@@ -273,6 +276,7 @@ $content
       }
 
       $cite->source=$source;
+      $cite->ref=$ref;
       $cite->tagatts=$atts;
       
       return self::add_citation_to_bibliography( $cite );
@@ -285,16 +289,28 @@ $content
           $citation = self::$bibliography->add_cite( $cite );
           $anchor = $citation->anchor;
           $bibindex = $citation->bibindex;
-          return 
+          $ref = $citation->ref;
+	  if ($ref == "fred" ) {
+            return
               "<span id=\"cite_$anchor\" name=\"citation\">" .
               "<a href=\"#$anchor\">[$bibindex]</a></span>";
+          } else {
+            return 
+              "<span id=\"cite_$anchor\" name=\"citation\">" .
+              "<a href=\"#$anchor\">$ref</a></span>";
+	}
       }
       else{
           $stubs = self::$stubs;
           $url = "$stubs[$source]{$cite->identifier}";
           $in_text = "<a href=\"$url\">$url</a>";
           $anchor = self::$bibliography->add_cite( $cite )->anchor;
-          return "<span class=\"kcite\" kcite-id=\"$anchor\">($in_text)</span>";
+          $ref = $citation->ref;
+	  if ($ref == "fred" ) {
+            return "<span class=\"kcite\" kcite-id=\"$anchor\">($in_text)</span>";
+          } else {
+	    return "<span class=\"kcite\" kcite-id=\"$anchor\"><a href=\"$anchor\">$ref</a></span>";
+          }
       }
   }
 
@@ -389,7 +405,8 @@ $content
       
       $script = <<<EOT
 
-<h2>Bibliography</h2>
+<h3>References</h3>
+
 <div class="kcite-bibliography"></div>
 <script type="text/javascript">var citeproc_controls=false;
 var blog_home_url="$home_url"
@@ -412,7 +429,7 @@ EOT;
       $bib_string = "<h2>References</h2>
     <ol>
     ";
-      $temp = strval( $pub_array );
+      /* $temp = strval( $pub_array ); */
       
       foreach ($pub_array as $pub) {
           
@@ -1368,7 +1385,9 @@ class Citation{
     }
 }
 
-KCite::init();
+// KCite::init(); removed by Gavin // 
+$kcite = new KCite();
+$kcite->init();
 
 function kcite_no_javascript(){
     KCite::$block_javascript = true;
